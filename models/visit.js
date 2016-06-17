@@ -14,23 +14,28 @@ var visitSchema = new Schema({
   campaign: String
 }, { collection: 'visits' });
 
-var findCountry = function (opts) {
-	var req = opts.req,
-		lookup,
-		ip, country = "IN";
+var getClientIP = function (req) {
+    var ip = req.headers['x-forwarded-for'] ||
+        req.headers['cf-connecting-ip'];
 
-	// else process the request
-	ip = req.headers['x-forwarded-for'] ||
-	req.connection.remoteAddress ||
-	req.socket.remoteAddress ||
-	req.connection.socket.remoteAddress;
-
-	lookup = opts.geoip.lookup(ip);
-	if (lookup) {
-		country = lookup.country;
-	}
-	return country;
+    ip = ip.split(",")[0];
+    return ip;
 }
+
+var findCountry = function (opts) {
+    var req = opts.req,
+        lookup,
+        ip, country = "IN";
+
+    return req.headers['cf-ipcountry'] || country;
+
+    /*ip = getClientIP(req);
+    lookup = opts.geoip.lookup(ip);
+    if (lookup) {
+        country = lookup.country;
+    }
+    return country;*/
+};
 
 visitSchema.statics.process = function (opts, cb) {
 	var self = this,
